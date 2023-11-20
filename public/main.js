@@ -1,5 +1,52 @@
 const socket = io();
 
+fetch('/protectedRoute/data')
+  .then(response => {
+    checkUserSession();
+    if (response.ok) {
+      
+    } else if (response.status === 401) {
+      // User is not authenticated, redirect to login page
+      window.location.href = '/login';
+    } else {
+    }
+  })
+  .catch(error => {
+    console.error('Fetch error:', error);
+  });
+
+
+// Add a function to check the user session on application start
+async function checkUserSession() {
+  try {
+    const response = await fetch('/checkSession'); // Create a new route on the server for this
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data && data.user_id && data.user_name && data.user_type) {
+        console.log('User already logged in:', data);
+        localStorage.setItem('userId', data.user_id);
+        localStorage.setItem('userName', data.user_name);
+        localStorage.setItem('userType', data.user_type);
+        displayHostSelection();
+        openAddConnectionWindow();
+      } else {
+        logout();
+        console.log('No user session found.');
+      }
+    } else {
+      logout();
+      console.error('Error checking user session:', response.statusText);
+    }
+  } catch (error) {
+    logout();
+    console.error('Error checking user session:', error.message);
+  }
+}
+
+checkUserSession();
+
 function showCreateAccount() {
   document.getElementById("login-page").style.display = "none";
   document.getElementById("create-account-page").style.display = "block";
@@ -139,20 +186,37 @@ function displayHostSelection() {
 
 function logout() {
   // Clear localStorage before going back to login page
-  localStorage.clear();
-  document.getElementById("login-page").style.display = "block";
-  document.getElementById("chat-page").style.display = "none";
-  document.getElementById("host-selection").style.display = "none";
+  fetch('/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => {
+      if (response.ok) {
+        console.log('Logout successful');
+        // Clear localStorage and update UI
+        localStorage.clear();
+        document.getElementById('login-page').style.display = 'block';
+        document.getElementById('chat-page').style.display = 'none';
+        document.getElementById('host-selection').style.display = 'none';
+      } else {
+        console.error('Error logging out:', response.statusText);
+      }
+    })
+    .catch((error) => {
+      console.error('Error logging out:', error.message);
+    });
 }
 
 function selectHost() {
+  checkUserSession();
   const hostDropdown = document.getElementById('host-dropdown');
   const selectedHostOption = hostDropdown.options[hostDropdown.selectedIndex];
   const receiverId = selectedHostOption ? selectedHostOption.value : "";
   const selectedHostName = selectedHostOption ? selectedHostOption.textContent : "";
   localStorage.setItem('receiverId', receiverId);
   const senderId = localStorage.getItem('userId');
-  console.log(JSON.stringify({ senderId, receiverId }));
   fetch("/fetchChatHistory", {
     method: "POST",
     headers: {
@@ -203,6 +267,7 @@ function showChatPage() {
 }
 
 function sendMessage() {
+  checkUserSession();
   const messageInput = document.getElementById("message-input");
   const message = messageInput.value;
   if (message.trim() !== "") {
@@ -226,6 +291,7 @@ function openAddConnectionWindow() {
 }
 
 function addConnection() {
+  checkUserSession();
   const searchUsernameInput = document.getElementById('search-username');
   const searchUsername = searchUsernameInput.value.trim();
 

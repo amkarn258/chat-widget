@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 
 const app = express();
@@ -9,7 +11,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 const credentials = './X509-cert-6081018163989366192.pem';
 // Add connection string to env variable
-const { MONGODB_URI } = process.env;
+const { MONGODB_URI, SESSION_SECRET } = process.env;
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -21,17 +23,31 @@ const User = require('./db_modules/userModule.js');
 const Connection = require('./db_modules/connectionModule.js');
 const Chat = require('./db_modules/chatModule.js');
 
+
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set secure to true in a production environment with HTTPS
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 io.on('connection', (socket) => {
-  console.log('User connected');
 
   socket.on('newMessage', async (data) => {
     const { sender, receiver, message } = data;
     const chat = new Chat({ sender, receiver, message });
+    const isAuthenticated = authenticateToken(socket.handshake.headers.authorization);
 
+    if (!isAuthenticated) {
+      // Handle unauthorized access
+      socket.disconnect(true);
+      return;
+    }
     try {
       await chat.save();
       io.emit('newMessage', { sender, receiver, message });
@@ -91,6 +107,17 @@ app.post('/login', async (req, res) => {
 
     if (user.encodedPassword === btoa(password)) {
       const userIdString = user._id instanceof ObjectId ? user._id.toHexString() : user._id;
+
+      // Create a JWT token for authentication
+      const token = jwt.sign({ userId: userIdString }, SESSION_SECRET || 'your-secret-key');
+      // Store the token in the session
+      req.session.token = token;
+      // Store user information in the session
+      req.session.user = {
+        userId: userIdString,
+        userName: user.name,
+        userType: user.userType,
+      };
 
       const connection = await Connection.findOne({ user_id: userIdString });
 
@@ -217,4 +244,72 @@ app.post('/addConnection', async (req, res) => {
       console.error('Error adding connection:', error);
       res.status(500).json({ message: 'Internal Server Error' });
     }
-  });
+});
+
+app.get('/checkSession', (req, res) => {
+  const userSession = req.session.user;
+  
+  if (userSession) {
+    res.status(200).json({
+      user_id: userSession.userId,
+      user_name: userSession.userName,
+      user_type: userSession.userType,
+      // ... any other user-related information you want to send ...
+    });
+  } else {
+    res.status(404).json({ message: 'No user session found' });
+  }
+});
+
+// Assuming you are using express-session middleware
+app.post('/logout', (req, res) => {
+  if (req.session) {
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+        res.status(500).json({ message: 'Internal Server Error' });
+      } else {
+        res.status(200).json({ message: 'Logout successful' });
+      }
+    });
+  } else {
+    // No session found
+    res.status(404).json({ message: 'No session found' });
+  }
+});
+
+// Define a middleware function to check user session
+function checkAuth(req, res, next) {
+  if (req.session && req.session.user) {
+    // User is authenticated, continue with the request
+    next();
+  } else {
+    // User is not authenticated, redirect to the login page
+    res.redirect('/login'); // Change the URL to your login page
+  }
+}
+
+// Apply the middleware to all routes that require authentication
+app.use('/protectedRoute', checkAuth);
+
+// Example protected route
+app.get('/protectedRoute/data', (req, res) => {
+  // Only accessible for authenticated users
+  res.json({ message: 'Protected data' });
+});
+
+// Add a middleware to authenticate requests
+function authenticateToken(token) {
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const decoded = jwt.verify(token, SESSION_SECRET || 'your-secret-key');
+    return decoded.userId; // You may return additional information if needed
+  } catch (error) {
+    console.error('Error authenticating token:', error);
+    return false;
+  }
+}
