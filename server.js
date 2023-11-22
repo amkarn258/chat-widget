@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 // Add connection string to env variable
-const { MONGODB_URI, CONFIG_FILE_CONTENTS } = process.env;
+const { MONGODB_URI, CONFIG_FILE_CONTENTS, SESSION_SECRET } = process.env;
 
 // Create a temporary file path
 const tempFilePath = path.join(__dirname, 'temp_config_file.pem');
