@@ -8,7 +8,6 @@
 </head>
 <body>
 
-<!-- Login Page -->
 <div id="login-page">
   <h2>Login</h2>
   <label>Email: </label>
@@ -22,7 +21,6 @@
   <a href="#" onclick="showCreateAccount()">Create Account</a>
 </div>
 
-<!-- Create Account Page -->
 <div id="create-account-page" style="display: none;">
     <h2>Create Account</h2>
     <label>Name: </label>
@@ -46,12 +44,10 @@
   </div>
   
 
-<!-- Chat Page -->
 <div id="chat-page" style="display: none;">
     <h2>Chat Window</h2>
     
     <div id="chat-messages">
-      <!-- Display chat messages here -->
     </div>
     
     <div>
@@ -67,21 +63,15 @@
     <button id="select-host-button" onclick="selectHost()">Select Host</button>
 </div>
 
-<!-- <button onclick="openAddConnectionWindow()">Add Connection</button> -->
 
-<!-- Add connection window -->
 <div id="add-connection-window" style="display: none;">
   <input type="text" id="search-username" placeholder="Enter username">
   <button id="add-connection-button" onclick="addConnection()">Add Connection</button>
 </div>
-<!-- <div id="add-connection-button-container"></div> -->
-<!-- Firebase and Socket.io scripts -->
 <script src="https://www.gstatic.com/firebasejs/9.3.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.3.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
-<!-- Your scripts -->
-<script type="module" src="firebase_config.js"></script>
 <script type="module" src="main.js"></script>
 
 <style>
