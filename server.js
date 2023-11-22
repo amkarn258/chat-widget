@@ -7,15 +7,14 @@ const { ObjectId } = require('mongodb');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-const credentials = './X509-cert-6081018163989366192.pem';
 // Add connection string to env variable
-const { MONGODB_URI } = process.env;
-
+const { MONGODB_URI, CONFIG_FILE_PATH } = process.env;
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: CONFIG_FILE_PATH,
   useUnifiedTopology: true,
 });
+
 // Import Mongoose models
 const User = require('./db_modules/userModule.js');
 const Connection = require('./db_modules/connectionModule.js');
