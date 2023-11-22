@@ -5,19 +5,27 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
-
+const path = require('path');
+const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-const credentials = './X509-cert-6081018163989366192.pem';
 // Add connection string to env variable
-const { MONGODB_URI, SESSION_SECRET } = process.env;
+const { MONGODB_URI, CONFIG_FILE_CONTENTS } = process.env;
 
+// Create a temporary file path
+const tempFilePath = path.join(__dirname, 'temp_config_file.pem');
+
+// Write the contents to the temporary file
+fs.writeFileSync(tempFilePath, CONFIG_FILE_CONTENTS);
+
+// Connect to MongoDB using the temporary file path
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: tempFilePath,
   useUnifiedTopology: true,
 });
+
 // Import Mongoose models
 const User = require('./db_modules/userModule.js');
 const Connection = require('./db_modules/connectionModule.js');
