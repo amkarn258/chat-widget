@@ -3,15 +3,24 @@ const http = require('http');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
-
+const path = require('path');
+const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 // Add connection string to env variable
-const { MONGODB_URI, CONFIG_FILE_PATH } = process.env;
+const { MONGODB_URI, CONFIG_FILE_CONTENTS } = process.env;
+
+// Create a temporary file path
+const tempFilePath = path.join(__dirname, 'temp_config_file.pem');
+
+// Write the contents to the temporary file
+fs.writeFileSync(tempFilePath, CONFIG_FILE_CONTENTS);
+
+// Connect to MongoDB using the temporary file path
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  tlsCertificateKeyFile: CONFIG_FILE_PATH,
+  tlsCertificateKeyFile: tempFilePath,
   useUnifiedTopology: true,
 });
 
