@@ -2,6 +2,7 @@
 
 To run:<br>
 `$env:MONGODB_URI="<mongo db connection string>"`<br>
+`$env:CONFIG_FILE_PATH=<db config file path>`<br>
 `npm start`<br>
 
 Will start the development server. be accessed here - <br>
