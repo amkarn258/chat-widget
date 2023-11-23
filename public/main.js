@@ -25,7 +25,6 @@ async function checkUserSession() {
       const data = await response.json();
 
       if (data && data.user_id && data.user_name && data.user_type) {
-        console.log('User already logged in:', data);
         localStorage.setItem('userId', data.user_id);
         localStorage.setItem('userName', data.user_name);
         localStorage.setItem('userType', data.user_type);
@@ -33,7 +32,6 @@ async function checkUserSession() {
         openAddConnectionWindow();
       } else {
         logout();
-        console.log('No user session found.');
       }
     } else {
       logout();
@@ -119,7 +117,6 @@ function login() {
     .then((data) => {
       // Process data and set localStorage only for successful responses (status 200)
       if (data && data.user_id && data.user_name && data.user_type && data.connections) {
-        console.log("User logged in:", data);
         localStorage.setItem('userId', data.user_id);
         localStorage.setItem('userName', data.user_name);
         localStorage.setItem('userType', data.user_type);
@@ -194,7 +191,6 @@ function logout() {
   })
     .then((response) => {
       if (response.ok) {
-        console.log('Logout successful');
         // Clear localStorage and update UI
         localStorage.clear();
         document.getElementById('login-page').style.display = 'block';

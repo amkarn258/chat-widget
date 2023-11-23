@@ -12,7 +12,6 @@ const server = http.createServer(app);
 const io = socketIo(server);
 // Add connection string to env variable
 const { MONGODB_URI, CONFIG_FILE_CONTENTS, SESSION_SECRET } = process.env;
-
 // Create a temporary file path
 const tempFilePath = path.join(__dirname, 'temp_config_file.pem');
 
@@ -31,7 +30,6 @@ const User = require('./db_modules/userModule.js');
 const Connection = require('./db_modules/connectionModule.js');
 const Chat = require('./db_modules/chatModule.js');
 
-
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -49,13 +47,6 @@ io.on('connection', (socket) => {
   socket.on('newMessage', async (data) => {
     const { sender, receiver, message } = data;
     const chat = new Chat({ sender, receiver, message });
-    const isAuthenticated = authenticateToken(socket.handshake.headers.authorization);
-
-    if (!isAuthenticated) {
-      // Handle unauthorized access
-      socket.disconnect(true);
-      return;
-    }
     try {
       await chat.save();
       io.emit('newMessage', { sender, receiver, message });
