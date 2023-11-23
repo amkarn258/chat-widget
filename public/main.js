@@ -196,6 +196,7 @@ function logout() {
         document.getElementById('login-page').style.display = 'block';
         document.getElementById('chat-page').style.display = 'none';
         document.getElementById('host-selection').style.display = 'none';
+        document.getElementById('add-connection-window').style.display = 'none';
       } else {
         console.error('Error logging out:', response.statusText);
       }
